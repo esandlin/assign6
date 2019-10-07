@@ -4,7 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.InetAddress;
 
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.io.*;
@@ -46,9 +48,11 @@ import server.Student;
  * @date July, 2015
  **/
 
-public class Message extends Object implements Runnable, ActionListener {
+public class Message extends Object implements Runnable{
 
     static final boolean debugOn = false;
+    static protected String host = "$localhost";
+    static protected String port = "1099";
 
     @SuppressWarnings("unused")
     private static void debug(String message) {
@@ -62,7 +66,7 @@ public class Message extends Object implements Runnable, ActionListener {
      * @param theView
      * @param theModel
      */
-    public Message(MessageGUI theView, Message theModel) {
+    public Message(MessageGUI theView) {
         this.theView = theView;
         theView.setDateTextField(theView.getDateTextField());
 
@@ -70,37 +74,19 @@ public class Message extends Object implements Runnable, ActionListener {
          * Tell the View that when ever the button is clicked to execute the
          * actionPerformed method in the Listener inner class
          */
-        theView.replyButton.addActionListener(this);
-        theView.sendButton.addActionListener(this);
-        theView.deleteButton.addActionListener(this);
-        theView.cypherButton.addActionListener(this);
+        this.theView.addCypherListener(new Listener());
+        this.theView.addDeleteListener(new Listener());
+        this.theView.addSendListener(new Listener());
+        this.theView.addReplyListener(new Listener());
     }
-
-    /**
-     * The Main starts the program
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-
+    
+    @Override
+    public void run() {
+        // TODO Auto-generated method stub
         try {
             // The OSName.java
             System.out.println(System.getProperty("os.name"));
             System.out.println(InetAddress.getLocalHost().getCanonicalHostName());
-
-            // The MVC
-            MessageGUI theView = new MessageGUI();
-
-            theView.setVisible(true);
-
-            String host = "$localhost";
-            String port = "1099";
-
-            try {
-                if (args.length >= 2) {
-                    host = args[0];
-                    port = args[1];
-                }
 
                 String url = "http://" + host + ":" + port + "/";
                 System.out.println("Opening connection to: " + url);
@@ -159,85 +145,110 @@ public class Message extends Object implements Runnable, ActionListener {
                 e.printStackTrace();
                 System.out.println("Oops, you didn't enter the right stuff");
             }
-        } catch (IOException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
+         
     }
-    
 
-    @Override
-    public void run() {
-        // TODO Auto-generated method stub
+    /**
+     * The Main starts the program
+     * 
+     * @param args
+     */
+    public static void main(String[] args) throws IOException {
+
+        // The MVC
+        MessageGUI theView = new MessageGUI();
+
+        theView.setVisible(true);
+        if (args.length >= 2) {
+            host = args[0];
+            port = args[1];
+        }
+        
+        Message m = new Message(theView);
+        new Thread(m).start();
+        
         
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-            /*
-             * Surround interactions with the view with a try block just in case
-             */
-            try {
+    class Listener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            // JTextField to, from, subject, date;
 
-                theView.getToTextField();
-                theView.getFromTextField();
-                theView.getSubjectTextField();
-                theView.getDateTextField();
-
-                /*
-                 * This is for Deleting nodes
-                 */
-                if (e.getActionCommand().equals("Delete")) {
-                    
-                    Thread.sleep(2000);
-                    SwingUtilities.invokeLater(new Runnable(){
-                        @Override
-                        public void run() {
-                            // TODO Auto-generated method stub
-                             DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) theView.tree.getSelectionPath()
-                            .getLastPathComponent();
-
-                    if (selectedNode != theView.tree.getModel().getRoot()) {
-                        DefaultTreeModel model = (DefaultTreeModel) theView.tree.getModel();
-
-                        model.removeNodeFromParent(selectedNode);
-                        model.reload();
-                    }}}
-                        );
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+               @Override
+                protected Void doInBackground() throws Exception {
                     /*
-                     * This is for creating new nodes
+                     * Surround interactions with the view with a try block just in case
                      */
-                } else if (e.getActionCommand().equals("Reply")) {
+                    try {
+                        theView.getToTextField();
+                        theView.getFromTextField();
+                        theView.getSubjectTextField();
+                        theView.getDateTextField();
+                        /*
+                         * This is for Deleting nodes
+                         */
+                        if (e.getActionCommand().equals("Delete")) {
 
-                    DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) theView.tree.getSelectionPath()
-                            .getLastPathComponent();
+                            Thread.sleep(2000);
+                            SwingUtilities.invokeLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // TODO Auto-generated method stub
+                                    DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) theView.tree
+                                            .getSelectionPath().getLastPathComponent();
 
-                    // DefaultMutableTreeNode newNode = new DefaultMutableTreeNode();
+                                    if (selectedNode != theView.tree.getModel().getRoot()) {
+                                        DefaultTreeModel model = (DefaultTreeModel) theView.tree.getModel();
 
-                    selectedNode.add(new DefaultMutableTreeNode(theView.getSubjectTextField().getText()));
+                                        model.removeNodeFromParent(selectedNode);
+                                        model.reload();
+                                    }
+                                }
+                            });
+                            /*
+                             * This is for creating new nodes
+                             */
+                        } else if (e.getActionCommand().equals("Reply")) {
 
-                    // reload jtree model
-                    DefaultTreeModel model = (DefaultTreeModel) theView.tree.getModel();
-                    model.reload();
-                    /*
-                     * todo
-                     */
-                } else if (e.getActionCommand().equals("Send Text")) {
+                            DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) theView.tree
+                                    .getSelectionPath().getLastPathComponent();
 
-                    System.out.println("you pressed send text");
-                    /*
-                     * todo
-                     */
-                } else if (e.getActionCommand().equals("Send Cipher")) {
+                            // DefaultMutableTreeNode newNode = new DefaultMutableTreeNode();
 
+                            selectedNode.add(new DefaultMutableTreeNode(theView.getSubjectTextField().getText()));
+
+                            String str = "RE:";
+
+                            // theView.setFromTextField(str);
+
+                            DefaultTreeModel model = (DefaultTreeModel) theView.tree.getModel();
+                            model.reload();
+                            /*
+                             * todo
+                             */
+                        } else if (e.getActionCommand().equals("Send Text")) {
+
+                            System.out.println("you pressed send text");
+                            /*
+                             * todo
+                             */
+                        } else if (e.getActionCommand().equals("Send Cipher")) {
+
+                        }
+
+                    } catch (NumberFormatException ex) {
+                        System.out.println(ex);
+                        theView.displayErrorMessage("Something went wrong.");
+                    } catch (InterruptedException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+
+                    return null;
                 }
-
-            } catch (NumberFormatException ex) {
-                System.out.println(ex);
-                theView.displayErrorMessage("Something went wrong.");
-            } catch (InterruptedException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-    }    
+            };
+            worker.execute();
+        }
+    }
 }

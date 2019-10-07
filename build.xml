@@ -20,7 +20,7 @@
 	</condition>
 
 	<target name="targets">
-		<echo message="Targets are clean, prepare, build.all, build.server, build.client, server.execute, client.execute, and targets" />
+		<echo message="Targets are clean, prepare, build.all, server, client, server.execute, client.execute, and targets" />
 		<echo message="base directory is: ${basedir}" />
 		<echo message="ostype is ${ostype}" />
 		<echo message="invoke java tcp server with: ant server ${host.name} ${port.num}" />
