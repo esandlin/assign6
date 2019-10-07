@@ -70,10 +70,10 @@ public class MessageGUI extends JFrame implements java.io.Serializable {
 	private JLabel dateLabel = new JLabel("Date:");
 	private JLabel statusLabel = new JLabel("Status:");
 	private JTextField toTextField = new JTextField(10);
-	private JButton replyButton = new JButton("Reply");
-	private JButton sendButton = new JButton("Send Text");
-	private JButton deleteButton = new JButton("Delete");
-	private JButton cypherButton = new JButton("Send Cypher");
+	protected JButton replyButton = new JButton("Reply");
+	protected JButton sendButton = new JButton("Send Text");
+	protected JButton deleteButton = new JButton("Delete");
+	protected JButton cypherButton = new JButton("Send Cypher");
 	private JTextField dateTextField = new JTextField(10);
 	private JTextField fromTextField = new JTextField(10);
 	private JTextField messageTextField = new JTextField();
